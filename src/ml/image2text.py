@@ -8,6 +8,7 @@ from difflib import SequenceMatcher
 
 from tqdm import tqdm
 
+from src.core.card import Card
 from src.utils.render import show
 from src.utils.tools import pyout
 
@@ -64,38 +65,12 @@ class ImageReader:
 
         return np.array(rank)[:128], tesseract_conf * levenshtein_conf
 
-# with open("res/card_database/ygoprodeck_db.json", 'r') as f:
-#     data = json.load(f)['data']
-#     cards_by_id = {card['id']: card for card in data}
-#     cards_by_name = {card['name'].lower(): card for card in data}
-#
-# root = "res/card_database/images"
-# for jj, fname in enumerate(tqdm(os.listdir(root))):
-#     fname = f"{root}/{fname}"
-#
-#     img_ = cv.imread(fname, 0)
-#     img_ = cv.resize(img_, (421, 614))
-#     img = img_[29:67, 27:351]
-#
-#     text, tesseract_conf = read_text_from_img(img)
-#
-#     try:
-#         found_card = cards_by_name[text.lower()]
-#         levenshtein_conf = 100
-#     except KeyError:
-#         f = lambda ii: SequenceMatcher(None, data[ii]['name'].lower(), text.lower()).ratio()
-#         card_argmax = max(range(len(data)), key=f)
-#         found_card = data[card_argmax]
-#         levenshtein_conf = round(f(card_argmax) * 100)
-#
-#     real_card = cards_by_id[int(fname.split('/')[-1].split('_')[0])]
-#
-#     if found_card['id'] != real_card['id']:
-#         tqdm.write("\n")
-#         tqdm.write(f"READ:  {text}")
-#         tqdm.write(f"FOUND: {found_card['name']}")
-#         tqdm.write(f"REAL:  {real_card['name']}")
-#         tqdm.write(f"tesseract:   {int(tesseract_conf)}%")
-#         tqdm.write(f"levenshtein: {int(levenshtein_conf)}%")
-#         img_ = cv.imread(fname)
-#         show(img_[:, :, ::-1], 100)
+    def read_release(self, card: Card):
+        if len(card.card_sets) == 1:
+            cardset = card.card_sets[0]
+            return cardset
+
+        card.show(-1)
+
+
+        pyout()

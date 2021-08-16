@@ -1,57 +1,93 @@
-import json
-from random import randint, randrange, uniform
+import sys
+from statistics import median
 
-import cv2 as cv
-import os
-
+import cv2
+import imutils as imutils
 import numpy as np
-import torch
-from torch.utils.data import DataLoader
+from imutils.perspective import four_point_transform
 from tqdm import tqdm
 
-from src.camera.card import Card
-from src.ml.cardartdataset import CardArtEvalSet
-from src.ml.cardmodel import CardModel, CardArtworkClassifier
+from src.camera import edgedetection
+from src.camera.edgedetection import EdgeDetector
+from src.camera.phonecam import PhoneCam
 from src.ml.classifier import CardClassifier
-from src.ml.image2text import ImageReader
-from src.ml.orb import ORB
-from src.utils.preprocessing import preprocess_img
-from src.utils.render import show, show_tensor
+from src.utils.render import show
 from src.utils.tools import pyout
 
+camera = PhoneCam()
+edgedetector = EdgeDetector()
 classifier = CardClassifier()
 
-ROOT = "res/card_database"
-imgfiles = sorted(os.listdir(f"{ROOT}/images"))
+area = []
 
-for ii, fname in enumerate(tqdm(imgfiles)):
-    id_ = int(fname.split('_')[0])
+while True:
+    img = camera.get_next_frame()
 
-    fname = f"{ROOT}/images/{fname}"
-    img_ = cv.imread(fname)
-    img_ = preprocess_img(img_)
-    card = Card(img_)
+    orig = img.copy()
+    #
+    # r = 7
+    #
+    # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # gray = cv2.GaussianBlur(gray, (r, r), 1)
+    # edged = cv2.Canny(gray, 75, 200)
+    # # gray = cv2.GaussianBlur(edged, (r, r), 1)
+    # # edged = cv2.Canny(gray, 75, 200)
+    #
+    # # edged = cv2.cvtColor(edged, cv2.COLOR_GRAY2BGR)
+    # #
+    # # frame = np.concatenate((orig, edged), axis=1)
+    # # show(frame, waitkey=25)
+    #
+    # cnts = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    # cnts = imutils.grab_contours(cnts)
+    #
+    # cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
+    #
+    # screen_cnt = None
+    # for c in cnts:
+    #     # approximate the contour
+    #     peri = cv2.arcLength(c, True)
+    #     approx = cv2.approxPolyDP(c, 0.05 * peri, True)
+    #
+    #     if len(approx) == 4:
+    #         screen_cnt = approx
+    #         break
+    #
+    # if screen_cnt is not None:
+    #     img = img.copy()
+    #     cv2.drawContours(img, [screen_cnt], -1, (0, 255, 0), 2)
+    #
+    #     # apply the four point transform to obtain a top-down view of the original image
+    #     warped = four_point_transform(orig, screen_cnt.reshape(4, 2))
+    #     warped = cv2.resize(warped, (421, 614))
+    #
+    #     img = cv2.resize(img, (421, 614))
+    #
+    #     frame = np.concatenate([img, warped], axis=1)
+    # else:
+    #     frame = cv2.resize(orig, (421, 614))
+    # show(frame, waitkey=1000 // 64)
 
-    card_pred = classifier.classify(card)
+    img = edgedetector.process(orig.copy())
+    show(img, waitkey=1000 // 64)
 
-    nn_ids, nn_conf = nn.rank(card)
-    txt_ids, txt_conf = read.rank_title(card)
-    if nn_ids[0] == txt_ids[0]:
-        ml_id = nn_ids[0]
-    else:
-        orb_ids, orb_conf = orb.rank(card, np.concatenate((nn_ids[:128], txt_ids[:128])))
-        orb_ids = orb_ids[orb_conf >= 0.99 * orb_conf[0]]
-        if txt_ids[0] in orb_ids:
-            ml_id = txt_ids[0]
-        else:
-            ml_id = orb_ids[0]
+    if edgedetector.mode == edgedetection.READY:
+        card = edgedetector.get_card(orig.copy())
 
-    if ml_id != id_:
-        pyout(carddb[id_]['name'])
 
-        frame = [card.artwork]
-        for ii in range(len(carddb[ml_id]['card_images'])):
-            img_ = Card(f"res/card_database/images/{ml_id}_{str(ii).zfill(2)}.jpg")
-            frame.append(img_.artwork)
 
-        show(np.concatenate(frame, axis=1), waitkey=100)
+        card_pred = classifier.classify(card)
+        card_set = classifier.release_code(card_pred, card_pred)
+
+        pyout(card_pred.name, card_set)
+        card.show(-1)
+
+        pyout()
+
+
+
+
+
+
+#
+# pyout(median(area))

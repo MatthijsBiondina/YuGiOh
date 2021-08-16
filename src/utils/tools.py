@@ -55,7 +55,7 @@ def pyout(*message):
 
     fname = trace.filename.replace(os.path.abspath(os.curdir), "...")
 
-    trace = f"{fname}: {trace.nameimg}(...) - ln{trace.lineno}"
+    trace = f"{fname}: {trace.name}(...) - ln{trace.lineno}"
 
     tqdm.write(pretty_string(trace, 'PINK', bold=True))
     if message is not None:

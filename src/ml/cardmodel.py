@@ -10,8 +10,7 @@ import antialiased_cnns
 from torchvision.transforms import transforms
 from tqdm import tqdm
 
-from src.camera.card import Card
-from src.utils.tools import pyout
+from src.core.card import Card
 
 
 class CardModel(nn.Module):

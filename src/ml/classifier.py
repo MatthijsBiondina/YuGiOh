@@ -3,11 +3,10 @@ import os
 
 import numpy as np
 
-from src.camera.card import Card
+from src.core.card import Card
 from src.ml.cardmodel import CardArtworkClassifier
 from src.ml.image2text import ImageReader
 from src.ml.orb import ORB
-from src.utils.tools import pyout
 
 
 class CardClassifier:
@@ -30,13 +29,16 @@ class CardClassifier:
         if nnm_ids[0] == txt_ids[0]:
             id_ = nnm_ids[0]
         else:
-            orb_ids, orb_conf = self.orb_algo.rank(card, np.concatenate(nnm_ids, txt_ids))
+            orb_ids, orb_conf = self.orb_algo.rank(card, np.concatenate((nnm_ids, txt_ids)))
             orb_ids = orb_ids[orb_conf >= 0.98 * orb_conf[0]]
             id_ = txt_ids[0] if txt_ids[0] in orb_ids else orb_ids[0]
 
         version = self.__get_version(card, id_)
 
         return Card(self.carddb[id_], version=int(version))
+
+    def release_code(self, card):
+        return self.img2text.read_release(card)
 
     def __get_version(self, card, id_):
         versions = []
