@@ -1,6 +1,9 @@
 import json
 import os
+import re
+from typing import Set
 
+import cv2
 import cv2 as cv
 import numpy as np
 import pytesseract
@@ -18,6 +21,7 @@ translator = str.maketrans('', '', escapes)
 
 def read_text_from_img(box):
     txt_nrm = pytesseract.image_to_data(box, output_type='data.frame')
+
     txt_nrm = txt_nrm[txt_nrm.conf != -1]
     try:
         cnf_nrm = sum(c * len(w) for c, w in zip(txt_nrm.conf, txt_nrm.text)) \
@@ -65,12 +69,70 @@ class ImageReader:
 
         return np.array(rank)[:128], tesseract_conf * levenshtein_conf
 
-    def read_release(self, card: Card):
-        if len(card.card_sets) == 1:
-            cardset = card.card_sets[0]
-            return cardset
+    def read_release(self, card: Card, candidates: Set[str]):
 
-        card.show(-1)
+        orig = card.releaseimg
+
+        # t = []
+
+        candidates = list(candidates)
+        scores = np.zeros((len(candidates),))
+        s = [None] * len(candidates)
+
+        height = 13
+        for dy in range(0, orig.shape[0] - height, 2):
+
+            img = orig[dy:dy + height]
+            grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            img = cv2.cvtColor(grey, cv2.COLOR_GRAY2BGR)
+
+            data = pytesseract.image_to_string(img, lang='eng', config='--psm 6')
+            data = re.sub('[^A-Z0-9-]', '', data)
+            # if len(data) > 0:
+            #     t.append(data)
+
+            for ii, code in enumerate(candidates):
+                s[ii] = match_sequence(code, data)
+
+            idx = max(range(len(s)), key=lambda x: s[x])
+            scores[idx] += s[idx]
+
+        idx = max(range(len(candidates)), key=lambda x: scores[x])
+
+        return candidates[idx]
+
+    def read_edition(self, card: Card):
+        orig = card.editionimg
+
+        height = 13
+        for dy in range(0, orig.shape[0] - height, 2):
+
+            img = orig[dy:dy + height]
+            grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            img = cv2.cvtColor(grey, cv2.COLOR_GRAY2BGR)
+
+            # show(img, 100)
+
+            data = pytesseract.image_to_string(img, lang='eng', config='--psm 6')
+            data = re.sub('[^a-zA-Z0-9-]', '', data)
+
+            score = match_sequence(data, "1st Edition")
+
+            if score > 0.66:
+                return True
+
+            # pyout(data, score)
+
+            # for ii, code in enumerate(candidates):
+            #     s[ii] = match_sequence(code, data)
+
+            # idx = max(range(len(s)), key=lambda x: s[x])
+            # scores[idx] += s[idx]
+
+        # idx = max(range(len(candidates)), key=lambda x: scores[x])
+
+        return False
 
 
-        pyout()
+
+

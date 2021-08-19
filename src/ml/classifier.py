@@ -1,12 +1,16 @@
 import json
 import os
+import sys
 
+import cv2
 import numpy as np
 
 from src.core.card import Card
 from src.ml.cardmodel import CardArtworkClassifier
 from src.ml.image2text import ImageReader
 from src.ml.orb import ORB
+from src.utils.render import show
+from src.utils.tools import pyout
 
 
 class CardClassifier:
@@ -37,8 +41,53 @@ class CardClassifier:
 
         return Card(self.carddb[id_], version=int(version))
 
-    def release_code(self, card):
-        return self.img2text.read_release(card)
+    def release_code(self, card_in, card_ou):
+        if len(card_ou.card_sets) == 1:
+            cardset = card_ou.card_sets[0]
+            return [cardset]
+
+        img_pp = self.adjust_hsv_values(card_in, card_ou)
+
+        # show(img_pp)
+
+        # frame = np.concatenate
+        candidates = set([set_['set_code'] for set_ in card_ou.card_sets])
+        set_code = self.img2text.read_release(Card(img_pp), candidates)
+
+        return [s for s in card_ou.card_sets if s['set_code'] == set_code]
+
+    def edition(self, card_in, card_ou):
+        img_pp = self.adjust_hsv_values(card_in, card_ou)
+        return self.img2text.read_edition(Card(img_pp))
+
+
+
+    def adjust_hsv_values(self, card_in, card_ou):
+
+        hsv_in = cv2.cvtColor(card_in.img, cv2.COLOR_BGR2HSV).astype(int)
+        hsv_ou = cv2.cvtColor(card_ou.img, cv2.COLOR_BGR2HSV).astype(int)
+
+        dh1 = hsv_ou[:, :, 0] - hsv_in[:, :, 0]
+        dh2 = 180 + hsv_ou[:, :, 0] - hsv_in[:, :, 0]
+        dhi = np.where(np.abs(dh1) < np.abs(dh2), dh1, -dh2)
+
+        dh = int(np.median(dhi))
+        ds = int(np.median(hsv_ou[:, :, 1] - hsv_in[:, :, 1]))
+        dv = int(np.median(hsv_ou[:, :, 2] - hsv_in[:, :, 2]))
+
+        dh, ds, dv = dh, ds, dv
+
+        h = np.mod(hsv_in[:, :, 0] + dh, 180)
+        s = np.clip(hsv_in[:, :, 1] + ds, 0, 255)
+        v = np.clip(hsv_in[:, :, 2] + dv, 0, 255)
+
+        hsv_pp = np.stack((h, s, v), axis=2).astype(np.uint8)
+        img_pp = cv2.cvtColor(hsv_pp, cv2.COLOR_HSV2BGR)
+
+        if card_ou.type == 'XYZ':
+            img_pp = 255 - img_pp
+
+        return img_pp
 
     def __get_version(self, card, id_):
         versions = []

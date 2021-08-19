@@ -8,6 +8,7 @@ from numpy import pi
 import matplotlib.cm as cm
 
 from src.core.card import Card
+from src.utils.render import show
 from src.utils.tools import pyout
 
 WAITING = 0
@@ -117,8 +118,10 @@ class EdgeDetector:
 
     def __get_contours(self, img):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (7, 7), 0)
+        gray = cv2.GaussianBlur(gray, (5, 5), 0)
         edged = cv2.Canny(gray, 75, 200)
+
+        # show(edged)
 
         cnts = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)

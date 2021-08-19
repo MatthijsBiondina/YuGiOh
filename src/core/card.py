@@ -32,7 +32,11 @@ class Card:
 
     @property
     def releaseimg(self):
-        return self.img[:, :]
+        return self.img[435: 475, 300:380]
+
+    @property
+    def editionimg(self):
+        return self.img[435:475, 41:130]
 
     def show(self, waitkey=-1):
         show(self.img, waitkey=waitkey)
@@ -43,3 +47,4 @@ class Card:
         self.id = D['id']
         self.name = D['name']
         self.card_sets = D['card_sets']
+        self.type = D['type']
