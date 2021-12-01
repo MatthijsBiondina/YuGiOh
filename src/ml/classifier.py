@@ -30,10 +30,17 @@ class CardClassifier:
         nnm_ids, nnm_conf = self.nn_model.rank(card)
         txt_ids, txt_conf = self.img2text.rank_title(card)
 
+        ids = []
+        for id_ in np.concatenate((nnm_ids, txt_ids)):
+            if self.carddb[id_]['type'] not in ('Skill Card', 'Token'):
+                ids.append(id_)
+        ids = np.array(ids)
+
+
         if nnm_ids[0] == txt_ids[0]:
             id_ = nnm_ids[0]
         else:
-            orb_ids, orb_conf = self.orb_algo.rank(card, np.concatenate((nnm_ids, txt_ids)))
+            orb_ids, orb_conf = self.orb_algo.rank(card, ids)
             orb_ids = orb_ids[orb_conf >= 0.98 * orb_conf[0]]
             id_ = txt_ids[0] if txt_ids[0] in orb_ids else orb_ids[0]
 

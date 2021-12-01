@@ -74,3 +74,22 @@ def bin_cards():
                 break
 
     pyout()
+
+
+# with open("res/card_database/ygoprodeck_db.json", 'r') as f:
+#     data_old = json.load(f)
+#
+# with open("res/card_database/ygoprodeck_db_old.json", 'w+') as f:
+#     json.dump(data_old, f)
+#
+# data_old = data_old['data']
+#
+# data_new = []
+# for card in data_old:
+#     if card['type'] not in ('Skill Card', 'Token'):
+#         data_new.append(card)
+#
+# data_new = {'data':data_new}
+#
+# with open("res/card_database/ygoprodeck_db.json", 'w') as f:
+#     json.dump(data_new, f)

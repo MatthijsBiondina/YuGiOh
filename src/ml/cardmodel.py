@@ -62,6 +62,7 @@ class CardArtworkClassifier:
         dist = ((self.feature_vectors - fv[None, :]) ** 2).sum(axis=1) ** .5
         idx = np.argsort(dist)
         id_ = self.idx2id[idx]
+
         return id_[:128], dist[idx[0]]
 
     def __init_feature_vectors(self):

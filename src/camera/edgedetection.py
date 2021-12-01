@@ -18,7 +18,7 @@ COOLDOWN = 3
 
 
 class EdgeDetector:
-    N = 64
+    N = 4
     TOL = 0.08
     ELENS = np.array([750, 518, 750, 518])
 
@@ -119,7 +119,13 @@ class EdgeDetector:
     def __get_contours(self, img):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
-        edged = cv2.Canny(gray, 75, 200)
+        edged = cv2.Canny(gray, 25, 200)
+
+        edged = np.maximum(edged, np.roll(edged,shift=1, axis=0))
+        edged = np.maximum(edged, np.roll(edged,shift=1, axis=1))
+
+
+
 
         # show(edged)
 

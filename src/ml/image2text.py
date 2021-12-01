@@ -23,6 +23,8 @@ def read_text_from_img(box):
     txt_nrm = pytesseract.image_to_data(box, output_type='data.frame')
 
     txt_nrm = txt_nrm[txt_nrm.conf != -1]
+    pyout(txt_nrm)
+
     try:
         cnf_nrm = sum(c * len(w) for c, w in zip(txt_nrm.conf, txt_nrm.text)) \
                   / (max(1, sum(len(w) for w in txt_nrm.text)))
@@ -35,7 +37,6 @@ def read_text_from_img(box):
         text = txt_nrm if cnf_nrm > cnf_inv else txt_inv
         text = ' '.join(text.text)
         text = text.translate(translator)
-
         return text, max(cnf_nrm, cnf_inv) / 100
     except TypeError:
         return "", 0.
